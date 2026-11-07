@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InvestIntel AI - Financial Intelligence Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css?v=20261107-v2">
+</head>
+<body>
+
+<div class="dashboard-wrapper">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="logo-section">
+            <div class="logo-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 3v18h18"/>
+                    <path d="M7 16l4-4 4 4 5-6"/>
+                    <path d="M17 6h3v3"/>
+                </svg>
+            </div>
+            <div class="logo-meta">
+                <span class="logo-text">InvestIntel<span class="logo-text-accent">.AI</span></span>
+                <span class="logo-tagline">Financial Intelligence</span>
+            </div>
+        </div>
+
+        <!-- Ingestion Upload Card -->
+        <div class="uploader-card" id="dropzone" role="button" tabindex="0" aria-label="Upload a PDF financial report" onclick="document.getElementById('fileInput').click()" onkeydown="if (event.key === 'Enter' || event.key === ' ') document.getElementById('fileInput').click()">
+            <div class="uploader-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="17 8 12 3 7 8"/>
+                    <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+            </div>
+            <div class="uploader-title">Ingest Report</div>
+            <div class="uploader-desc">Drag & drop or browse PDF</div>
+            <div class="uploader-badge">10-K / 10-Q Financials</div>
+            <input type="file" id="fileInput" class="file-input" accept=".pdf">
+        </div>
+
+        <!-- Ingestion Progress Bar -->
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-header">
+                <span id="progressStatus">Uploading report...</span>
+                <span id="progressPercent">0%</span>
+            </div>
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="progressBarFill"></div>
+            </div>
+        </div>
+
+        <!-- System Engine Status Card (Replacing Promo) -->
+        <div class="telemetry-card">
+            <div class="telemetry-header">
+                <div class="telemetry-pulse">
+                    <span class="pulse-beacon"></span>
+                    <span class="pulse-dot"></span>
+                </div>
+                <span class="telemetry-title">System Telemetry</span>
+                <span class="telemetry-badge">Live</span>
+            </div>
+            <div class="telemetry-list">
+                <div class="telemetry-row">
+                    <span class="telemetry-label">Analysis Engine</span>
+                    <span class="telemetry-val val-green">Online</span>
+                </div>
+                <div class="telemetry-row">
+                    <span class="telemetry-label">Vector Store</span>
+                    <span class="telemetry-val val-green">Synchronized</span>
+                </div>
+                <div class="telemetry-row">
+                    <span class="telemetry-label">RAG Pipeline</span>
+                    <span class="telemetry-val val-blue">PyMuPDF 4 LLM</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Overview -->
+        <div class="stats-summary">
+            <div class="stat-row">
+                <div class="stat-info">
+                    <span class="stat-label">Companies</span>
+                    <span class="stat-val" id="statsCompanies">{{ total_companies }}</span>
+                </div>
+                <div class="stat-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M3 7v14M9 3v18M15 10v11M21 5v16"/></svg>
+                </div>
+            </div>
+            <div class="stat-row">
+                <div class="stat-info">
+                    <span class="stat-label">Reports Analyzed</span>
+                    <span class="stat-val" id="statsReports">{{ total_reports }}</span>
+                </div>
+                <div class="stat-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content Panel -->
+    <main class="main-content">
+        <!-- Header -->
+        <header class="header-container">
+            <div class="header-title-section">
+                <div class="header-badge">Enterprise Intelligence</div>
+                <h1>AI-Powered Investor Intelligence Platform</h1>
+                <p>Real-time corporate insights, financial benchmarking, and qualitative KPI extraction</p>
+            </div>
+            <div class="header-actions">
+                <div class="status-indicator">
+                    <span class="status-dot"></span>
+                    <span>Multi-Period RAG Active</span>
+                </div>
+            </div>
+        </header>
+
+        {% if metrics %}
+        <!-- KPI Cards Grid -->
+        <section class="kpi-grid">
+            <!-- 1. Revenue Card -->
+            <div class="kpi-card card-cyan">
+                <div class="kpi-card-header">
+                    <div class="kpi-info">
+                        <h2>Revenue</h2>
+                        <p>Total company revenue</p>
+                    </div>
+                    <div class="kpi-icon-wrapper">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="kpi-values-list">
+                    {% for row in metrics %}
+                    {% if row.revenue %}
+                    <div class="kpi-value-row">
+                        <div class="kpi-company-label">
+                            <span class="company-badge-name">
+                                <span class="company-logo-avatar">{{ row.company[:2] | upper }}</span>
+                                <span class="company-name-text">{{ row.company }} <span class="company-year-tag">{{ row.year }}</span></span>
+                            </span>
+                            <span class="kpi-val-number">{{ row.revenue }}</span>
+                        </div>
+                        <div class="kpi-compare-bar-bg">
+                            <div class="kpi-compare-bar-fill"></div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- 2. Net Income Card -->
+            <div class="kpi-card card-emerald">
+                <div class="kpi-card-header">
+                    <div class="kpi-info">
+                        <h2>Net Income</h2>
+                        <p>Net profitability after expenses</p>
+                    </div>
+                    <div class="kpi-icon-wrapper">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M18 20V10M12 20V4M6 20v-6"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="kpi-values-list">
+                    {% for row in metrics %}
+                    {% if row.net_income %}
+                    <div class="kpi-value-row">
+                        <div class="kpi-company-label">
+                            <span class="company-badge-name">
+                                <span class="company-logo-avatar">{{ row.company[:2] | upper }}</span>
+                                <span class="company-name-text">{{ row.company }} <span class="company-year-tag">{{ row.year }}</span></span>
+                            </span>
+                            <span class="kpi-val-number">{{ row.net_income }}</span>
+                        </div>
+                        <div class="kpi-compare-bar-bg">
+                            <div class="kpi-compare-bar-fill"></div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- 3. Operating Income Card -->
+            <div class="kpi-card card-blue">
+                <div class="kpi-card-header">
+                    <div class="kpi-info">
+                        <h2>Operating Income</h2>
+                        <p>Earnings from operations</p>
+                    </div>
+                    <div class="kpi-icon-wrapper">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21.21 15.89A10 10 0 1 1 8 2.83"/>
+                            <path d="M22 12A10 10 0 0 0 12 2v10z"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="kpi-values-list">
+                    {% for row in metrics %}
+                    {% if row.operating_income %}
+                    <div class="kpi-value-row">
+                        <div class="kpi-company-label">
+                            <span class="company-badge-name">
+                                <span class="company-logo-avatar">{{ row.company[:2] | upper }}</span>
+                                <span class="company-name-text">{{ row.company }} <span class="company-year-tag">{{ row.year }}</span></span>
+                            </span>
+                            <span class="kpi-val-number">{{ row.operating_income }}</span>
+                        </div>
+                        <div class="kpi-compare-bar-bg">
+                            <div class="kpi-compare-bar-fill"></div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- 4. Operating Cash Flow Card -->
+            <div class="kpi-card card-violet">
+                <div class="kpi-card-header">
+                    <div class="kpi-info">
+                        <h2>Operating Cash Flow</h2>
+                        <p>Cash flow from operations</p>
+                    </div>
+                    <div class="kpi-icon-wrapper">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="2" y="6" width="20" height="12" rx="2"/>
+                            <circle cx="12" cy="12" r="2"/>
+                            <path d="M6 12h.01M18 12h.01"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="kpi-values-list">
+                    {% for row in metrics %}
+                    {% if row.cash_flow %}
+                    <div class="kpi-value-row">
+                        <div class="kpi-company-label">
+                            <span class="company-badge-name">
+                                <span class="company-logo-avatar">{{ row.company[:2] | upper }}</span>
+                                <span class="company-name-text">{{ row.company }} <span class="company-year-tag">{{ row.year }}</span></span>
+                            </span>
+                            <span class="kpi-val-number">{{ row.cash_flow }}</span>
+                        </div>
+                        <div class="kpi-compare-bar-bg">
+                            <div class="kpi-compare-bar-fill"></div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- 5. Total Assets Card -->
+            <div class="kpi-card card-amber">
+                <div class="kpi-card-header">
+                    <div class="kpi-info">
+                        <h2>Total Assets</h2>
+                        <p>Total economic resources</p>
+                    </div>
+                    <div class="kpi-icon-wrapper">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                            <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+                            <line x1="12" y1="22.08" x2="12" y2="12"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="kpi-values-list">
+                    {% for row in metrics %}
+                    {% if row.total_assets %}
+                    <div class="kpi-value-row">
+                        <div class="kpi-company-label">
+                            <span class="company-badge-name">
+                                <span class="company-logo-avatar">{{ row.company[:2] | upper }}</span>
+                                <span class="company-name-text">{{ row.company }} <span class="company-year-tag">{{ row.year }}</span></span>
+                            </span>
+                            <span class="kpi-val-number">{{ row.total_assets }}</span>
+                        </div>
+                        <div class="kpi-compare-bar-bg">
+                            <div class="kpi-compare-bar-fill"></div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- 6. Total Liabilities Card -->
+            <div class="kpi-card card-rose">
+                <div class="kpi-card-header">
+                    <div class="kpi-info">
+                        <h2>Total Liabilities</h2>
+                        <p>Total outstanding obligations</p>
+                    </div>
+                    <div class="kpi-icon-wrapper">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="1" x2="12" y2="23"/>
+                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="kpi-values-list">
+                    {% for row in metrics %}
+                    {% if row.total_liabilities %}
+                    <div class="kpi-value-row">
+                        <div class="kpi-company-label">
+                            <span class="company-badge-name">
+                                <span class="company-logo-avatar">{{ row.company[:2] | upper }}</span>
+                                <span class="company-name-text">{{ row.company }} <span class="company-year-tag">{{ row.year }}</span></span>
+                            </span>
+                            <span class="kpi-val-number">{{ row.total_liabilities }}</span>
+                        </div>
+                        <div class="kpi-compare-bar-bg">
+                            <div class="kpi-compare-bar-fill"></div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+
+        <!-- Company Intelligence Inspector -->
+        <section class="deep-dive-section">
+            <div class="section-header">
+                <div class="section-title">
+                    <div class="section-title-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"/>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h2>Qualitative Intelligence Deep-Dive</h2>
+                        <p>Extracted strategic catalysts and risk factor disclosures</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="deep-dive-card">
+                <div class="inspector-header">
+                    <div class="inspector-meta">
+                        <h3 id="inspectorCompanyName">Company Insights</h3>
+                        <div class="inspector-year-pill">
+                            <span class="year-dot"></span>
+                            <span id="inspectorYear">Fiscal Year</span>
+                        </div>
+                    </div>
+                    <div class="company-selector-wrapper">
+                        <label for="companySelect">Selected Company</label>
+                        <div class="custom-select-wrapper">
+                            <select id="companySelect" class="company-select" onchange="switchCompany(this.value)">
+                                {% for row in metrics %}
+                                    <option value="{{ row.company }}">{{ row.company }} ({{ row.year }})</option>
+                                {% endfor %}
+                            </select>
+                            <svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="6 9 12 15 18 9"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="qualitative-grid">
+                    <!-- Growth Drivers -->
+                    <div class="qualitative-column col-drivers">
+                        <div class="qual-col-title drivers-title">
+                            <div class="qual-col-icon icon-growth">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+                                    <polyline points="17 6 23 6 23 12"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4>Top Growth Drivers</h4>
+                                <span class="qual-col-sub">Strategic momentum & market catalysts</span>
+                            </div>
+                        </div>
+                        <div class="qual-list" id="growthDriversList">
+                            <!-- Injected dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Risk Factors -->
+                    <div class="qualitative-column col-risks">
+                        <div class="qual-col-title risks-title">
+                            <div class="qual-col-icon icon-risk">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                                    <line x1="12" y1="9" x2="12" y2="13"/>
+                                    <line x1="12" y1="17" x2="12.01" y2="17"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4>Top Risk Factors</h4>
+                                <span class="qual-col-sub">Identified operational, market & regulatory risks</span>
+                            </div>
+                        </div>
+                        <div class="qual-list" id="riskFactorsList">
+                            <!-- Injected dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        {% else %}
+        <!-- Empty State -->
+        <div class="deep-dive-card empty-state">
+            <div class="empty-icon-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="12" y1="18" x2="12" y2="12"/>
+                    <line x1="9" y1="15" x2="15" y2="15"/>
+                </svg>
+            </div>
+            <h2>No Corporate Financial Data Yet</h2>
+            <p>
+                Ingest your first company financial report (such as annual 10-K or quarterly 10-Q PDFs) using the sidebar uploader. 
+                Our AI engine will parse the core balance sheet metrics, operating results, growth drivers, and strategic risk factors.
+            </p>
+            <button class="empty-upload-btn" onclick="document.getElementById('fileInput').click()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="17 8 12 3 7 8"/>
+                    <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+                <span>Upload Financial PDF</span>
+            </button>
+        </div>
+        {% endif %}
+    </main>
+
+    <!-- Right Chat Panel -->
+    <aside class="chat-panel" id="chatPanel">
+        <div class="chat-panel-header">
+            <div class="chat-panel-title">
+                <div class="chat-panel-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    </svg>
+                </div>
+                <div>
+                    <span class="chat-header-text">AI Financial Analyst</span>
+                    <span class="chat-header-sub">Ask questions across ingested reports</span>
+                </div>
+            </div>
+            <button class="chat-panel-toggle" id="chatToggleBtn" onclick="toggleChatPanel()" title="Collapse analyst panel">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="9 18 15 12 9 6"/>
+                </svg>
+            </button>
+        </div>
+
+        <div class="chat-messages" id="chatMessages">
+            <!-- Welcome message -->
+            <div class="chat-msg bot-msg">
+                <div class="chat-avatar bot-avatar">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                    </svg>
+                </div>
+                <div class="chat-bubble bot-bubble">
+                    <p>Welcome! I'm your AI Financial Intelligence Analyst. Ask me anything about ingested company reports — revenue trends, risk factors, debt positions, and growth drivers.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Question Chips -->
+        <div class="chat-quick-chips">
+            <button class="quick-chip" onclick="quickAsk('What are the primary risk factors disclosed?')">Summary of Risks</button>
+            <button class="quick-chip" onclick="quickAsk('Compare revenue and net income performance.')">Revenue vs Income</button>
+            <button class="quick-chip" onclick="quickAsk('What are the main growth drivers?')">Growth Drivers</button>
+        </div>
+
+        <div class="chat-input-area">
+            <div class="chat-context-bar">
+                <label class="chat-context-label" for="chatCompanySelect">Scope</label>
+                <div class="chat-context-select-wrapper">
+                    <select id="chatCompanySelect" class="chat-context-select">
+                        <option value="">All Ingested Companies</option>
+                        {% for row in metrics %}
+                        <option value="{{ row.company }}">{{ row.company }} ({{ row.year }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="chat-input-row">
+                <input type="text" id="chatInput" class="chat-text-input" placeholder="Ask financial question..." autocomplete="off" />
+                <button id="sendBtn" class="chat-send-btn" onclick="sendMessage()" title="Send query to AI analyst">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="22" y1="2" x2="11" y2="13"/>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </aside>
+</div>
+
+<!-- Collapsed chat tab (visible when panel is collapsed) -->
+<div class="chat-collapsed-tab" id="chatCollapsedTab" onclick="toggleChatPanel()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+    </svg>
+    <span>AI Analyst</span>
+</div>
+
+<!-- Custom toast containers -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- JSON data bridge from Python to JavaScript -->
+<script>
+    const companyData = {
+        {% for row in metrics %}
+            "{{ row.company }}": {
+                "year": "{{ row.year }}",
+                "revenue": "{{ row.revenue }}",
+                "net_income": "{{ row.net_income }}",
+                "operating_income": "{{ row.operating_income }}",
+                "cash_flow": "{{ row.cash_flow }}",
+                "total_assets": "{{ row.total_assets }}",
+                "total_liabilities": "{{ row.total_liabilities }}",
+                "growth_drivers": {{ (row.growth_drivers or '').split('\n') | tojson }},
+                "risk_factors": {{ (row.risk_factors or '').split('\n') | tojson }}
+            },
+        {% endfor %}
+    };
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    // ----------------------------------------------------
+    // 1. Dynamic Bar Width Calculations
+    // ----------------------------------------------------
+    function parseNumericValue(valStr) {
+        if (!valStr) return 0;
+        let cleaned = String(valStr).replace(/[$,\s]/g, '');
+        let isNegative = false;
+        if (cleaned.startsWith('(') && cleaned.endsWith(')')) {
+            isNegative = true;
+            cleaned = cleaned.slice(1, -1);
+        }
+        let num = parseFloat(cleaned);
+        return isNaN(num) ? 0 : (isNegative ? -num : num);
+    }
+
+    const cards = document.querySelectorAll('.kpi-card');
+    cards.forEach(card => {
+        const rows = card.querySelectorAll('.kpi-value-row');
+        let maxVal = 0;
+        
+        const parsedVals = [];
+        rows.forEach(row => {
+            const valEl = row.querySelector('.kpi-val-number');
+            const valText = valEl ? valEl.textContent.trim() : '0';
+            const num = parseNumericValue(valText);
+            parsedVals.push(num);
+            if (Math.abs(num) > maxVal) {
+                maxVal = Math.abs(num);
+            }
+        });
+        
+        rows.forEach((row, idx) => {
+            const num = parsedVals[idx];
+            const barFill = row.querySelector('.kpi-compare-bar-fill');
+            if (barFill) {
+                let pct = maxVal > 0 ? (Math.abs(num) / maxVal) * 100 : 15;
+                if (pct < 10) pct = 10;
+                barFill.style.width = `${pct}%`;
+                
+                if (num < 0) {
+                    barFill.style.background = 'linear-gradient(90deg, #f43f5e 0%, rgba(244, 63, 94, 0.4) 100%)';
+                }
+            }
+        });
+    });
+
+    // ----------------------------------------------------
+    // 2. Company Switch Selector Setup
+    // ----------------------------------------------------
+    const selector = document.getElementById('companySelect');
+    if (selector && selector.options.length > 0) {
+        switchCompany(selector.options[0].value);
+    }
+
+    // ----------------------------------------------------
+    // 3. Document Drag and Drop Upload System
+    // ----------------------------------------------------
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('fileInput');
+    const progressContainer = document.getElementById('progressContainer');
+    const progressBarFill = document.getElementById('progressBarFill');
+    const progressStatus = document.getElementById('progressStatus');
+    const progressPercent = document.getElementById('progressPercent');
+
+    if (dropzone && fileInput) {
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropzone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                dropzone.classList.add('dragover');
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropzone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                dropzone.classList.remove('dragover');
+            }, false);
+        });
+
+        dropzone.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files.length > 0) {
+                handleUpload(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length > 0) {
+                handleUpload(fileInput.files[0]);
+            }
+        });
+    }
+
+    function handleUpload(file) {
+        if (!file.name.toLowerCase().endsWith('.pdf')) {
+            showToast('Invalid File Format', 'Please upload a PDF financial report (e.g. 10-K or 10-Q).', 'error');
+            return;
+        }
+
+        progressContainer.style.display = 'block';
+        progressStatus.textContent = 'Uploading PDF...';
+        progressBarFill.style.width = '15%';
+        progressPercent.textContent = '15%';
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/api/upload', true);
+
+        xhr.upload.onprogress = (e) => {
+            if (e.lengthComputable) {
+                const percent = Math.min(45, Math.round((e.loaded / e.total) * 45));
+                progressBarFill.style.width = `${percent}%`;
+                progressPercent.textContent = `${percent}%`;
+            }
+        };
+
+        xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+                progressBarFill.style.width = '70%';
+                progressPercent.textContent = '70%';
+                progressStatus.textContent = 'Parsing financial KPIs & risks...';
+                
+                let extractProgress = 70;
+                const interval = setInterval(() => {
+                    if (extractProgress < 94) {
+                        extractProgress += 3;
+                        progressBarFill.style.width = `${extractProgress}%`;
+                        progressPercent.textContent = `${extractProgress}%`;
+                    }
+                }, 350);
+
+                setTimeout(() => {
+                    clearInterval(interval);
+                    progressBarFill.style.width = '100%';
+                    progressPercent.textContent = '100%';
+                    progressStatus.textContent = 'Analysis Complete';
+                    
+                    showToast('Ingestion Complete', `Successfully extracted financial metrics from report.`, 'success');
+                    
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1200);
+                }, 3800);
+            } else {
+                progressBarFill.style.width = '0%';
+                progressContainer.style.display = 'none';
+                try {
+                    const res = JSON.parse(xhr.responseText);
+                    showToast('Ingestion Failed', res.message || 'Error processing financial document.', 'error');
+                } catch(e) {
+                    showToast('Ingestion Failed', 'Internal server error occurred.', 'error');
+                }
+            }
+        };
+
+        xhr.onerror = () => {
+            progressBarFill.style.width = '0%';
+            progressContainer.style.display = 'none';
+            showToast('Connection Error', 'Failed to communicate with ingestion service.', 'error');
+        };
+
+        xhr.send(formData);
+    }
+
+    // ----------------------------------------------------
+    // 4. Chat Input – Enter key support
+    // ----------------------------------------------------
+    const chatInput = document.getElementById('chatInput');
+    if (chatInput) {
+        chatInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+    }
+});
+
+// Quick question chip click
+function quickAsk(text) {
+    const input = document.getElementById('chatInput');
+    if (input) {
+        input.value = text;
+        sendMessage();
+    }
+}
+
+// Switch company in inspector view
+function switchCompany(companyName) {
+    const data = companyData[companyName];
+    if (!data) return;
+
+    // Update Meta
+    const compEl = document.getElementById('inspectorCompanyName');
+    if (compEl) compEl.textContent = companyName;
+
+    const yrEl = document.getElementById('inspectorYear');
+    if (yrEl) yrEl.textContent = `Fiscal Year ${data.year}`;
+
+    // Update Growth Drivers
+    const driversList = document.getElementById('growthDriversList');
+    if (driversList) {
+        driversList.innerHTML = '';
+        if (data.growth_drivers && data.growth_drivers.length > 0 && data.growth_drivers[0].trim() !== "") {
+            data.growth_drivers.forEach(driver => {
+                if (!driver.trim()) return;
+                const item = document.createElement('div');
+                item.className = 'qual-item qual-driver-item';
+                item.innerHTML = `
+                    <div class="qual-item-icon driver-item-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    </div>
+                    <div class="qual-item-text">${escapeHtml(driver)}</div>
+                `;
+                driversList.appendChild(item);
+            });
+        } else {
+            driversList.innerHTML = `
+                <div class="no-qualitative">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    <span>No growth drivers parsed for this report.</span>
+                </div>`;
+        }
+    }
+
+    // Update Risk Factors
+    const risksList = document.getElementById('riskFactorsList');
+    if (risksList) {
+        risksList.innerHTML = '';
+        if (data.risk_factors && data.risk_factors.length > 0 && data.risk_factors[0].trim() !== "") {
+            data.risk_factors.forEach(risk => {
+                if (!risk.trim()) return;
+                const item = document.createElement('div');
+                item.className = 'qual-item qual-risk-item';
+                item.innerHTML = `
+                    <div class="qual-item-icon risk-item-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    </div>
+                    <div class="qual-item-text">${escapeHtml(risk)}</div>
+                `;
+                risksList.appendChild(item);
+            });
+        } else {
+            risksList.innerHTML = `
+                <div class="no-qualitative">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    <span>No high-risk factors identified for this period.</span>
+                </div>`;
+        }
+    }
+}
+
+// ----------------------------------------------------
+// Chat Panel – Toggle, Send, Render
+// ----------------------------------------------------
+function toggleChatPanel() {
+    const panel = document.getElementById('chatPanel');
+    const tab = document.getElementById('chatCollapsedTab');
+    const wrapper = document.querySelector('.dashboard-wrapper');
+
+    if (!panel) return;
+    panel.classList.toggle('collapsed');
+
+    if (panel.classList.contains('collapsed')) {
+        if (wrapper) wrapper.classList.add('chat-collapsed');
+        if (tab) tab.classList.add('visible');
+    } else {
+        if (wrapper) wrapper.classList.remove('chat-collapsed');
+        if (tab) tab.classList.remove('visible');
+    }
+}
+
+async function sendMessage() {
+    const input = document.getElementById('chatInput');
+    if (!input) return;
+    const question = input.value.trim();
+    if (!question) return;
+
+    const companySelect = document.getElementById('chatCompanySelect');
+    const selectedCompany = companySelect ? companySelect.value : '';
+
+    let selectedYear = null;
+    if (selectedCompany && companyData[selectedCompany]) {
+        selectedYear = parseInt(companyData[selectedCompany].year) || null;
+    }
+
+    appendMessage('user', question);
+    input.value = '';
+    input.focus();
+
+    const typingId = showTypingIndicator();
+
+    try {
+        const payload = {
+            question: question
+        };
+        if (selectedCompany) {
+            payload.company = selectedCompany;
+        }
+        if (selectedYear) {
+            payload.year = selectedYear;
+        }
+
+        const response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        removeTypingIndicator(typingId);
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            const errorMsg = errorData.detail || `Server error (${response.status})`;
+            appendMessage('bot', `Sorry, an error occurred: ${errorMsg}`);
+            return;
+        }
+
+        const data = await response.json();
+        appendMessage('bot', data.answer || 'No response returned from the model.');
+
+    } catch (err) {
+        removeTypingIndicator(typingId);
+        appendMessage('bot', `Connection error: ${err.message}. Please verify the backend service is reachable.`);
+    }
+}
+
+function appendMessage(role, text) {
+    const container = document.getElementById('chatMessages');
+    if (!container) return;
+    const msgDiv = document.createElement('div');
+    msgDiv.className = `chat-msg ${role}-msg`;
+
+    const avatarSvg = role === 'user'
+        ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`
+        : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
+
+    // Format newlines into paragraphs
+    const formatted = escapeHtml(text).replace(/\n\n+/g, '</p><p>').replace(/\n/g, '<br>');
+
+    msgDiv.innerHTML = `
+        <div class="chat-avatar ${role}-avatar">${avatarSvg}</div>
+        <div class="chat-bubble ${role}-bubble">
+            <p>${formatted}</p>
+        </div>
+    `;
+
+    container.appendChild(msgDiv);
+    container.scrollTop = container.scrollHeight;
+}
+
+function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+let typingCounter = 0;
+function showTypingIndicator() {
+    const container = document.getElementById('chatMessages');
+    if (!container) return null;
+    const id = `typing-${++typingCounter}`;
+    const typingDiv = document.createElement('div');
+    typingDiv.className = 'chat-msg bot-msg';
+    typingDiv.id = id;
+    typingDiv.innerHTML = `
+        <div class="chat-avatar bot-avatar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        </div>
+        <div class="chat-bubble bot-bubble typing-bubble">
+            <div class="typing-dots">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+    `;
+    container.appendChild(typingDiv);
+    container.scrollTop = container.scrollHeight;
+    return id;
+}
+
+function removeTypingIndicator(id) {
+    if (!id) return;
+    const el = document.getElementById(id);
+    if (el) el.remove();
+}
+
+// Global Toast display helper
+function showToast(title, message, type = 'success') {
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    
+    const icon = type === 'success' 
+        ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>`
+        : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`;
+        
+    toast.innerHTML = `
+        <div class="toast-icon">${icon}</div>
+        <div class="toast-content">
+            <div class="toast-title">${title}</div>
+            <div class="toast-message">${message}</div>
+        </div>
+        <div class="toast-close" onclick="this.parentElement.remove()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </div>
+    `;
+    
+    container.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.classList.add('show');
+    }, 10);
+    
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => {
+            toast.remove();
+        }, 400);
+    }, 5000);
+}
+</script>
+</body>
+</html>
